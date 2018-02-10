@@ -20,8 +20,14 @@ void usage(void){
   printf("-l\t display data, calculate avg load.\n");
 }
 
-void defaultUse(void){
+/*
+ * show the processor type, kernel version, time since last reboot.
+ * No command line parameters
+ */
 
+void defaultUse(void){
+    char *processorType = getSubStr("/proc/cpuinfo", "model name");
+    char *kerVersion = getSubStr
 
 }
 
@@ -58,7 +64,7 @@ char *getSubStr(const char *fileName, const char *locator){
     while(fgets(result,MAX_BUF_LEN,fp) != NULL){
       if (strstr(result,locator) != NULL) {
         fclose(fp);
-        return result;
+        return result;  //remember to free result!!
       }
     }
   }
