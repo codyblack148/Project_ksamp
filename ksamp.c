@@ -9,33 +9,36 @@
 
 int main(int argc, char *argv[]){
   int opt, sample, length;
-  int lArg, sArg = 0;
  if(argc ==  1)
 	defaultUse();
  else{
 	 while ((opt = getopt(argc, argv, "sl:")) != -1) {
                switch (opt) {
                case 's':
-                   sArg = TRUE;
+                   if (argc != 2) {
+                     usage();
+                     exit(-2);
+                   }
+                   sInfo();
                    break;
                case 'l':
-		   if(argc != 4){
-		   	usage();
-			exit(-2); //does not have 2 input numbers.
-		   }
-		   sample =atoi( argv[2]);
-		   length = atoi(argv[3]);
-		   lArg = TRUE;
+            		   if(argc != 4){
+            		   	usage();
+            			  exit(-2); //does not have 2 input numbers.
+            		   }
+            		   sample =atoi( argv[2]);
+            		   length = atoi(argv[3]);
+            		   lInfo(sample,length);
                    break;
                default:
-		   usage();
-                   	
+		               usage();
+
 }
 }
 }
 }
 void usage(void){
-  printf("Usage: ksamp [-s | -l samp duration]\n");
+  printf("\nUsage: ksamp [-s | -l samp duration]\n");
   printf("-s\t display kernal data\n");
   printf("-l\t display data, calculate avg load.\n");
 }
@@ -58,12 +61,63 @@ void defaultUse(void){
     free(uptime);
     free(timeInSeconds);
 }
+/*
+ * Show data from default. Also show time processor has been
+ * in user mode, system mode, idle, number of disks
+ */
 
 void sInfo(void){
+    char *cpuStat = getSubStr("/proc/stat","cpu");
+    char *userMode = getEntry(2,cpuStat," \t");
+    char *idleMode = getEntry(5,cpuStat," \t");
+    char *sysMode = getEntry(4,cpuStat," \t");
+    //All of these numbers are "jiffies"... need to be divided by 100 for Seconds
+    char *diskStats = getSubStr("/proc/diskstats","sda");
+    char *diskReads = getEntry(2,diskStats," \t");
+    char *diskWrites = getEntry(2,diskStats," \t");
+    /*
+     * I am concerned about "sda". That is the format on my machine in Debian
+     * but research has told me there are several different versions.
+     * If you run this on a system with a different version for diskStats
+     * It would not find the correct data.
+     */
 
+    defaultUse();
+    printf("User mode: %d\n",atoi(userMode)/100);
+    printf("Idle mode: %d\n",atoi(idleMode)/100);
+    printf("System mode: %d\n",atoi(sysMode)/100);
+    printf("Disk reads: %s\n",diskReads);
+    printf("Disk writes: %s\n",diskWrites);
+
+    free(cpuStat);
+    free(userMode);
+    free(idleMode);
+    free(sysMode);
+    free(diskStats);
+    free(diskReads);
+    free(diskWrites);
 }
-
+/*
+ * Show both other outputs, plus amount of memory configured.
+ *
+ */
 void lInfo(int sample, int length){
+    char *totalMem = getSubStr("/proc/meminfo","MemTotal");
+    char *freeMem = getSubStr("/proc/meminfo","MemFree");
+    sInfo();
+    printf("%s\n", totalMem);
+    printf("%s\n", freeMem);
+    printf("\n1 minute, 5 minutes, 10 minutes, running processes / total processes, most recent proc PID\n");
+    int cycles = length / sample;
+      int i = 0;
+      for(i; i < cycles; i++) {
+          char *avg = getSubString("/proc/loadavg", NULL);
+
+          printf("%s", avg);
+
+          free(avg);
+          sleep(sample);
+      }
 
 }
 /*
@@ -105,13 +159,11 @@ char *getEntry(int n, const char *str, const char *delims){
 	char temp[MAX_BUF_LEN];
 
 	strcpy(temp,str);
-	
+
 	char *token = strtok(temp,delims);
-	
+
 	for(i;i<n;i++)
 		token = strtok(NULL,delims);
 	strcpy(result,token);
 	return result;
 }
-
-
