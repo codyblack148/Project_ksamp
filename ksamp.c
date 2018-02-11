@@ -8,13 +8,32 @@
 
 
 int main(int argc, char *argv[]){
-
-  bool lArg = false;
-  bool sArg = false;
-  defaultUse();
-
+  int opt, sample, length;
+  int lArg, sArg = 0;
+ if(argc ==  1)
+	defaultUse();
+ else{
+	 while ((opt = getopt(argc, argv, "sl:")) != -1) {
+               switch (opt) {
+               case 's':
+                   sArg = TRUE;
+                   break;
+               case 'l':
+		   if(argc != 4){
+		   	usage();
+			exit(-2); //does not have 2 input numbers.
+		   }
+		   sample =atoi( argv[2]);
+		   length = atoi(argv[3]);
+		   lArg = TRUE;
+                   break;
+               default:
+		   usage();
+                   	
 }
-
+}
+}
+}
 void usage(void){
   printf("Usage: ksamp [-s | -l samp duration]\n");
   printf("-s\t display kernal data\n");
@@ -94,4 +113,5 @@ char *getEntry(int n, const char *str, const char *delims){
 	strcpy(result,token);
 	return result;
 }
+
 
