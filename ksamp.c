@@ -53,7 +53,7 @@ void defaultUse(void){
     char *kerVersion = getSubStr("/proc/version","Linux version");
     char *uptime = getSubStr("/proc/uptime",NULL);
     char *timeInSeconds = getEntry(1,uptime," \t");
-    printf("Processor Type: %s\n",processorType);
+    printf("%s\n",processorType);
     printf("Kernel Information: %s\n",kerVersion);
     printf("Seconds since last reboot: %s\n",timeInSeconds);
     free(processorType);
@@ -73,8 +73,8 @@ void sInfo(void){
     char *sysMode = getEntry(4,cpuStat," \t");
     //All of these numbers are "jiffies"... need to be divided by 100 for Seconds
     char *diskStats = getSubStr("/proc/diskstats","sda");
-    char *diskReads = getEntry(2,diskStats," \t");
-    char *diskWrites = getEntry(2,diskStats," \t");
+    char *diskReads = getEntry(4,diskStats," \t");
+    char *diskWrites = getEntry(8,diskStats," \t");
     /*
      * I am concerned about "sda". That is the format on my machine in Debian
      * but research has told me there are several different versions.
@@ -111,7 +111,7 @@ void lInfo(int sample, int length){
     int cycles = length / sample;
       int i = 0;
       for(i; i < cycles; i++) {
-          char *avg = getSubString("/proc/loadavg", NULL);
+          char *avg = getSubStr("/proc/loadavg", NULL);
 
           printf("%s", avg);
 
