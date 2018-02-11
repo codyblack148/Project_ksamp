@@ -13,6 +13,8 @@ void sInfo(void);
 void usage(void);
 char *getSubStr(const char *, const char *);
 char *getEntry(int, const char *, const char *);
-
+void freeDefault(void);
+void freeS(void);
+void freeL(void);
 
 #endif

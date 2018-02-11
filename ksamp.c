@@ -11,6 +11,7 @@ int main(int argc, char *argv[]){
 
   bool lArg = false;
   bool sArg = false;
+  defaultUse();
 
 }
 
@@ -27,8 +28,16 @@ void usage(void){
 
 void defaultUse(void){
     char *processorType = getSubStr("/proc/cpuinfo", "model name");
-    char *kerVersion = getSubStr
-
+    char *kerVersion = getSubStr("/proc/version","Linux version");
+    char *uptime = getSubStr("/proc/uptime",NULL);
+    char *timeInSeconds = getEntry(1,uptime," \t");
+    printf("Processor Type: %s\n",processorType);
+    printf("Kernel Information: %s\n",kerVersion);
+    printf("Seconds since last reboot: %s\n",timeInSeconds);
+    free(processorType);
+    free(kerVersion);
+    free(uptime);
+    free(timeInSeconds);
 }
 
 void sInfo(void){
@@ -57,19 +66,32 @@ char *getSubStr(const char *fileName, const char *locator){
       fclose(fp);
       return result;
     }
+  }
   /*
    * Cycle through entire file. If the locator substring
    * is found in result, return that line.
    */
     while(fgets(result,MAX_BUF_LEN,fp) != NULL){
       if (strstr(result,locator) != NULL) {
-        fclose(fp);
-        return result;  //remember to free result!!
+	      fclose(fp);
+	      return result;
       }
     }
   }
 
-}
-char *getEntry(int n, const char *str, const char *delims){
 
+char *getEntry(int n, const char *str, const char *delims){
+	int i = 1;
+	char *result = (char *)malloc(MAX_BUF_LEN);
+	char temp[MAX_BUF_LEN];
+
+	strcpy(temp,str);
+	
+	char *token = strtok(temp,delims);
+	
+	for(i;i<n;i++)
+		token = strtok(NULL,delims);
+	strcpy(result,token);
+	return result;
 }
+
