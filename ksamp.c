@@ -68,13 +68,13 @@ void defaultUse(void){
 
 void sInfo(void){
     char *cpuStat = getSubStr("/proc/stat","cpu");
-    char *userMode = getEntry(2,cpuStat," \t");
-    char *idleMode = getEntry(5,cpuStat," \t");
-    char *sysMode = getEntry(4,cpuStat," \t");
+    char *userMode = getEntry(3,cpuStat," \t");
+    char *idleMode = getEntry(6,cpuStat," \t");
+    char *sysMode = getEntry(5,cpuStat," \t");
     //All of these numbers are "jiffies"... need to be divided by 100 for Seconds
     char *diskStats = getSubStr("/proc/diskstats","sda");
-    char *diskReads = getEntry(4,diskStats," \t");
-    char *diskWrites = getEntry(8,diskStats," \t");
+    char *diskReads = getEntry(13,diskStats," \t");
+    char *diskWrites = getEntry(17,diskStats," \t");
     /*
      * I am concerned about "sda". That is the format on my machine in Debian
      * but research has told me there are several different versions.
@@ -137,6 +137,11 @@ char *getSubStr(const char *fileName, const char *locator){
   if(locator == NULL){
     if (fgets(result,MAX_BUF_LEN,fp) != NULL) {
       fclose(fp);
+      if(result == NULL){
+      	printf("%s\n","NULL read from file.");
+	free(result);
+	exit(-3);//NULL file read
+      }
       return result;
     }
   }
@@ -147,6 +152,12 @@ char *getSubStr(const char *fileName, const char *locator){
     while(fgets(result,MAX_BUF_LEN,fp) != NULL){
       if (strstr(result,locator) != NULL) {
 	      fclose(fp);
+		 if(result == NULL){
+      		 printf("%s\n","NULL read from file.");
+		 free(result);
+		 exit(-3);//NULL file read
+      		 }
+
 	      return result;
       }
     }
@@ -155,15 +166,22 @@ char *getSubStr(const char *fileName, const char *locator){
 
 char *getEntry(int n, const char *str, const char *delims){
 	int i = 1;
-	char *result = (char *)malloc(MAX_BUF_LEN);
-	char temp[MAX_BUF_LEN];
+	char *result = NULL;
+      if((result = (char *)malloc(MAX_BUF_LEN)) == NULL){
+      		printf("Issue with allocating memory.");
+		exit(-4); //issue with memory allocation code.
+      }
+      
+        char firstTempValue[MAX_BUF_LEN] = {'\0'};
+	char *temp[MAX_BUF_LEN] = {'\0'};
+	strcpy(firstTempValue,str);
+	temp[0]= firstTempValue;
+	char *token = strsep(temp,delims);
 
-	strcpy(temp,str);
-
-	char *token = strtok(temp,delims);
-
-	for(i;i<n;i++)
-		token = strtok(NULL,delims);
+	while(n>1){
+		token = strsep(temp,delims);
+		n--;
+	}
 	strcpy(result,token);
 	return result;
 }
