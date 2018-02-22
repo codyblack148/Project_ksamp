@@ -36,6 +36,7 @@ int main(int argc, char *argv[]){
 }
 }
 }
+return 0;
 }
 void usage(void){
   printf("\nUsage: ksamp [-s | -l samp duration]\n");
@@ -72,9 +73,9 @@ void sInfo(void){
     char *idleMode = getEntry(6,cpuStat," \t");
     char *sysMode = getEntry(5,cpuStat," \t");
     //All of these numbers are "jiffies"... need to be divided by 100 for Seconds
-    char *diskStats = getSubStr("/proc/diskstats","sda");
-    char *diskReads = getEntry(13,diskStats," \t");
-    char *diskWrites = getEntry(17,diskStats," \t");
+    char *diskStats = getSubStr("/proc/diskstats","mmcblk0");
+    char *diskReads = getEntry(11,diskStats," \t");
+    char *diskWrites = getEntry(15,diskStats," \t");
     /*
      * I am concerned about "sda". That is the format on my machine in Debian
      * but research has told me there are several different versions.
@@ -104,6 +105,7 @@ void sInfo(void){
 void lInfo(int sample, int length){
     char *totalMem = getSubStr("/proc/meminfo","MemTotal");
     char *freeMem = getSubStr("/proc/meminfo","MemFree");
+    char *avg;
     sInfo();
     printf("%s\n", totalMem);
     printf("%s\n", freeMem);
@@ -111,7 +113,7 @@ void lInfo(int sample, int length){
     int cycles = length / sample;
       int i = 0;
       for(i; i < cycles; i++) {
-          char *avg = getSubStr("/proc/loadavg", NULL);
+          avg = getSubStr("/proc/loadavg", NULL);
 
           printf("%s", avg);
 
@@ -125,7 +127,11 @@ void lInfo(int sample, int length){
 */
 char *getSubStr(const char *fileName, const char *locator){
   FILE *fp;
-  char *result = (char *)malloc(MAX_BUF_LEN);
+  char *result;
+  	if((result = (char *)malloc(MAX_BUF_LEN))==NULL){
+		printf("Error with memory allocation.");
+		exit(-1);
+	}
   fp =fopen(fileName,"r");
   if(fp == NULL){
     perror("Error: ");
@@ -167,21 +173,26 @@ char *getSubStr(const char *fileName, const char *locator){
 char *getEntry(int n, const char *str, const char *delims){
 	int i = 1;
 	char *result = NULL;
-      if((result = (char *)malloc(MAX_BUF_LEN)) == NULL){
-      		printf("Issue with allocating memory.");
-		exit(-4); //issue with memory allocation code.
-      }
-      
         char firstTempValue[MAX_BUF_LEN] = {'\0'};
 	char *temp[MAX_BUF_LEN] = {'\0'};
 	strcpy(firstTempValue,str);
 	temp[0]= firstTempValue;
 	char *token = strsep(temp,delims);
 
+       	if((result = (char *)malloc(MAX_BUF_LEN)) == NULL){
+      		printf("Issue with allocating memory.");
+		exit(-4); //issue with memory allocation code.
+      }
+      
+
 	while(n>1){
 		token = strsep(temp,delims);
 		n--;
 	}
 	strcpy(result,token);
+	if(result == NULL){
+		printf("NULL entry returned, error.");
+		exit(-3);
+	}
 	return result;
 }
