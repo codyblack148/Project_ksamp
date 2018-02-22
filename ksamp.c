@@ -68,27 +68,28 @@ void defaultUse(void){
  */
 
 void sInfo(void){
+    char bootStr[80];
     char *cpuStat = getSubStr("/proc/stat","cpu");
+    char *btimeStat = getSubStr("/proc/stat","btime");
     char *userMode = getEntry(3,cpuStat," \t");
     char *idleMode = getEntry(6,cpuStat," \t");
     char *sysMode = getEntry(5,cpuStat," \t");
+    char *bootMode = getEntry(2,btimeStat," \t");
     //All of these numbers are "jiffies"... need to be divided by 100 for Seconds
     char *diskStats = getSubStr("/proc/diskstats","mmcblk0");
     char *diskReads = getEntry(11,diskStats," \t");
     char *diskWrites = getEntry(15,diskStats," \t");
-    /*
-     * I am concerned about "sda". That is the format on my machine in Debian
-     * but research has told me there are several different versions.
-     * If you run this on a system with a different version for diskStats
-     * It would not find the correct data.
-     */
-
+    time_t boot = atoi(bootMode);
+    struct tm ts;
+    ts = *localtime(&boot);
+    strftime(bootStr, sizeof(bootStr), "%a %Y-%m-%d %H:%M:%S %Z", &ts);
     defaultUse();
     printf("User mode: %d\n",atoi(userMode)/100);
     printf("Idle mode: %d\n",atoi(idleMode)/100);
     printf("System mode: %d\n",atoi(sysMode)/100);
     printf("Disk reads: %s\n",diskReads);
     printf("Disk writes: %s\n",diskWrites);
+    printf("Boot time: %s\n",bootStr);
 
     free(cpuStat);
     free(userMode);
@@ -97,6 +98,8 @@ void sInfo(void){
     free(diskStats);
     free(diskReads);
     free(diskWrites);
+    free(btimeStat);
+    free(bootMode);
 }
 /*
  * Show both other outputs, plus amount of memory configured.
@@ -120,7 +123,8 @@ void lInfo(int sample, int length){
           free(avg);
           sleep(sample);
       }
-
+      free(totalMem);
+      free(freeMem);
 }
 /*
 * Return a subtring in fileName using locator.
@@ -183,7 +187,7 @@ char *getEntry(int n, const char *str, const char *delims){
       		printf("Issue with allocating memory.");
 		exit(-4); //issue with memory allocation code.
       }
-      
+
 
 	while(n>1){
 		token = strsep(temp,delims);
